@@ -34,21 +34,26 @@ const setJson = async ()  => {
 
 const sendPhoto = async (photo, caption) => {
     await setMultipart();
+    const chat_id = `${process.env.telegram_bot_chat_id}`;
 
-    const data = {
-        chat_id: `${process.env.telegram_bot_chat_id}`,
-        photo: photo,
-        caption: caption
-    };
-    return instance.post(`/bot${process.env.telegram_bot_auth_token}/sendMessage`, data)
+    const formData = new FormData();
+    formData.append('photo', photo);
+    formData.append('chat_id', chat_id);
+    formData.append('caption', caption);
+
+    // const data = {
+    //     chat_id: `${process.env.telegram_bot_chat_id}`,
+    //     photo: photo,
+    //     caption: caption
+    // };
+    return instance.post(`/bot${process.env.telegram_bot_auth_token}/sendPhoto`, formData)
 };
 
-const sendMessage = async (photo, caption) => {
+const sendMessage = async (message) => {
     await setJson();
     const data = {
         chat_id: `${process.env.telegram_bot_chat_id}`,
-        photo: photo,
-        caption: caption
+        text: message,
     };
 
     return instance.post(`/bot${process.env.telegram_bot_auth_token}/sendMessage`, data)

@@ -3,6 +3,7 @@ import ReCAPTCHA from "react-google-recaptcha";
 import { Formik, Form, Field } from 'formik';
 import * as Yup from 'yup';
 import NotificationService from "../services/notificationService";
+import apiService from "../services/apiService";
 
 class App extends React.Component{
     constructor(props) {
@@ -10,14 +11,9 @@ class App extends React.Component{
 
         this.state = {
             captchaValue: '',
-            nama: '',
-            identitas: '',
-            fileFotoIdentitas: null,
-            fileFotoWajah: null,
-            nomorHp: '',
-            alamat: '',
-            lamaInap: '',
-            keterangan: ''
+            fileFotoIdentitas: {},
+            fileFotoWajah: {},
+            sending: false
         }
 
     }
@@ -55,6 +51,8 @@ class App extends React.Component{
                 .required('Foto wajah diperlukan.'),
             noHandphone: Yup.string()
                 .required('No Handphone diperlukan.'),
+            noRumahInap: Yup.string()
+                .required('No Rumah diperlukan.'),
             alamat: Yup.string()
                 .required('Alamat diperlukan.'),
             lamaInap: Yup.string()
@@ -68,7 +66,7 @@ class App extends React.Component{
         return (
             <div className="container">
                 <div className="row">
-                    <h3 className="col-md-12">Form Laporan Tamu</h3>
+                    <h3 className="col-md-12">Form Laporan Tamu Green Living Residence</h3>
                 </div>
                 <div className="row">
                     <div className="col-md-12">
@@ -79,22 +77,53 @@ class App extends React.Component{
                                 fotoIdentitas: '',
                                 fotoWajah: '',
                                 noHandphone: '',
+                                noRumahInap: '',
                                 alamat: '',
                                 lamaInap: '',
                                 keterangan: ''
                             }}
                             validationSchema={submitSchema}
-                            onSubmit={values => {
+                            onSubmit={async (values) => {
                                 // same shape as initial values
                                 if(this.validate()) {
-                                    console.log(values);
+                                    this.setState({
+                                        sending: true
+                                    });
+                                    const message = `
+                                    Laporan Tamu Masuk\n
+                                    Nama: ${values.nama}\n
+                                    Alamat: ${values.alamat}\n
+                                    No Telepon: ${values.noHandphone}\n
+                                    No Rumah Inap: ${values.noRumahInap}\n
+                                    Lama Inap: ${values.lamaInap}\n
+                                    Keterangan: ${values.keterangan}
+                                    `;
+
+                                    const CaptionWajah = `Foto Wajah dari ${values.nama} (${values.identitas})`;
+                                    const CaptionIdentitas = `Foto Identitas dari ${values.nama} (${values.identitas})`;
+
+                                    try {
+                                        await apiService.sendMessage(message);
+                                        await apiService.sendPhoto(this.state.fileFotoIdentitas, CaptionIdentitas);
+                                        await apiService.sendPhoto(this.state.fileFotoWajah, CaptionWajah)
+                                        NotificationService.notifySuccess('Sukses melakukan pengisian');
+                                        this.setState({
+                                            sending: false
+                                        })
+                                    } catch (e) {
+                                        NotificationService.notifyError('Jaringan gagal!');
+                                        this.setState({
+                                            sending: false
+                                        })
+                                    }
+
                                 } else {
                                     NotificationService.notifyError('Anda harus melakukan validasi google recaptcha!');
                                 }
 
                             }}
                         >
-                            {({ errors, touched }) => (
+                            {({ errors, touched, setFieldValue }) => (
                                 <Form>
                                     <div className="form-group">
                                         <label>Nama</label>
@@ -118,9 +147,15 @@ class App extends React.Component{
                                     </div>
                                     <div className="form-group">
                                         <label>File Foto Identitas</label>
-                                        <Field
+                                        <input
                                             name="fotoIdentitas"
                                             type="file"
+                                            onChange={(ev) => {
+                                                this.setState({
+                                                    fileFotoIdentitas: ev.currentTarget.files[0]
+                                                });
+                                                setFieldValue("fotoIdentitas", ev.currentTarget.files[0]);
+                                            }}
                                         />
                                         {errors.fotoIdentitas && touched.fotoIdentitas ? (
                                             <div style={{color: 'red'}}>{errors.fotoIdentitas}</div>
@@ -129,11 +164,18 @@ class App extends React.Component{
 
                                     <div className="form-group">
                                         <label>File Foto Wajah</label>
-                                        <Field
+                                        <input
                                             name="fotoWajah"
                                             type="file"
+                                            id="fotoWajah"
+                                            onChange={(ev) => {
+                                                this.setState({
+                                                    fileFotoWajah: ev.currentTarget.files[0]
+                                                });
+                                                setFieldValue("fotoWajah", ev.currentTarget.files[0]);
+                                            }}
                                         />
-                                        {errors.fotoWajah && touched.fotoWajah ? (
+                                        {errors.fotoWajah  && touched.fotoWajah ? (
                                             <div style={{color: 'red'}}>{errors.fotoWajah}</div>
                                         ) : null}
                                     </div>
@@ -148,7 +190,17 @@ class App extends React.Component{
                                         ) : null}
                                     </div>
                                     <div className="form-group">
-                                        <label>Alamat</label>
+                                        <label>Nomor Rumah Tempat Inap</label>
+                                        <Field
+                                            className="form-control"
+                                            name="noRumahInap"
+                                        />
+                                        {errors.noRumahInap && touched.noRumahInap ? (
+                                            <div style={{color: 'red'}}>{errors.noRumahInap}</div>
+                                        ) : null}
+                                    </div>
+                                    <div className="form-group">
+                                        <label>Alamat Asal (sesuai ktp)</label>
                                         <Field
                                             as="textarea"
                                             className="form-control"
@@ -179,11 +231,15 @@ class App extends React.Component{
                                         ) : null}
                                     </div>
                                     <ReCAPTCHA
-                                        sitekey="6Lfpy8kUAAAAAJMynzLuKcoQnpxm1SuZ6L5uk1Rr"
+                                        sitekey={`${process.env.google_site_key_captchav2}`}
                                         onChange={(v) => this.onChange(v)}
                                     />
                                     <br/>
-                                    <button type="submit" className="btn btn-primary">Kirim</button>
+                                    <button
+                                        type="submit"
+                                        className="btn btn-primary"
+                                        disabled={this.state.sending}
+                                    >Kirim</button>
                                 </Form>
                             )}
                         </Formik>
