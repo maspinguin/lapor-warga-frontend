@@ -83,7 +83,7 @@ class App extends React.Component{
                                 keterangan: ''
                             }}
                             validationSchema={submitSchema}
-                            onSubmit={async (values) => {
+                            onSubmit={async (values, {resetForm}) => {
                                 // same shape as initial values
                                 if(this.validate()) {
                                     this.setState({
@@ -109,7 +109,9 @@ class App extends React.Component{
                                         NotificationService.notifySuccess('Sukses melakukan pengisian');
                                         this.setState({
                                             sending: false
-                                        })
+                                        });
+
+                                        resetForm();
                                     } catch (e) {
                                         NotificationService.notifyError('Jaringan gagal!');
                                         this.setState({
