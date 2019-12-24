@@ -89,15 +89,13 @@ class App extends React.Component{
                                     this.setState({
                                         sending: true
                                     });
-                                    const message = `
-                                    Laporan Tamu Masuk\n
-                                    Nama: ${values.nama}\n
-                                    Alamat: ${values.alamat}\n
-                                    No Telepon: ${values.noHandphone}\n
-                                    No Rumah Inap: ${values.noRumahInap}\n
-                                    Lama Inap: ${values.lamaInap}\n
-                                    Keterangan: ${values.keterangan}
-                                    `;
+                                    const message = 'Laporan Tamu Masuk\n'+
+                                    'Nama: '+values.nama+'\n'+
+                                    'Alamat: '+values.alamat+'\n'+
+                                    'No Telepon: '+values.noHandphone+'\n'+
+                                    'No Rumah Inap: '+ values.noRumahInap+'\n'+
+                                    'Lama Inap: '+values.lamaInap+'\n'+
+                                    'Keterangan: '+values.keterangan;
 
                                     const CaptionWajah = `Foto Wajah dari ${values.nama} (${values.identitas})`;
                                     const CaptionIdentitas = `Foto Identitas dari ${values.nama} (${values.identitas})`;
@@ -105,7 +103,7 @@ class App extends React.Component{
                                     try {
                                         await apiService.sendMessage(message);
                                         await apiService.sendPhoto(this.state.fileFotoIdentitas, CaptionIdentitas);
-                                        await apiService.sendPhoto(this.state.fileFotoWajah, CaptionWajah)
+                                        await apiService.sendPhoto(this.state.fileFotoWajah, CaptionWajah);
                                         NotificationService.notifySuccess('Sukses melakukan pengisian');
                                         this.setState({
                                             sending: false

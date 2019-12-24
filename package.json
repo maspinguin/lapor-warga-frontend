@@ -4,7 +4,8 @@
   "description": "hanya iseng laporan rt rw dengan integrasi bot telegram",
   "main": "index.js",
   "scripts": {
-    "start": "cross-env NODE_ENV=local webpack-dev-server --hot --port 4000"
+    "start": "cross-env NODE_ENV=local webpack-dev-server --hot --port 4000",
+    "build": "rm -Rf build && webpack -p"
   },
   "repository": {
     "type": "git",
